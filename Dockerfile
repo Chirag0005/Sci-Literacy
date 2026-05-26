@@ -56,6 +56,9 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 # Configure directory permissions for storage
 RUN mkdir -p storage bootstrap/cache && chown -R www-data:www-data storage bootstrap/cache
 
+# Allow PHP-FPM to read system environment variables (vital for cloud hosting env vars)
+RUN echo "clear_env = no" >> /usr/local/etc/php-fpm.d/www.conf
+
 EXPOSE 80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
