@@ -39,13 +39,17 @@ COPY --from=assets-builder /app/public/build ./public/build
 # Run post-autoload dump
 RUN composer run post-autoload-dump
 
-# Copy custom Nginx & Supervisor configuration files
+# Copy custom Nginx, Supervisor, and entrypoint files
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisord.conf
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Make entrypoint script executable
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Configure directory permissions for storage
 RUN mkdir -p storage bootstrap/cache && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 80
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
