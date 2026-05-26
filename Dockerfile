@@ -10,7 +10,7 @@ RUN npm run build
 FROM php:8.2-fpm-alpine
 WORKDIR /var/www/html
 
-# Install system dependencies
+# Install system dependencies (including nodejs and npm for the MongoDB bridge CLI)
 RUN apk add --no-cache \
     nginx \
     supervisor \
@@ -20,7 +20,9 @@ RUN apk add --no-cache \
     zip \
     unzip \
     git \
-    oniguruma-dev
+    oniguruma-dev \
+    nodejs \
+    npm
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql gd bcmath mbstring xml
@@ -32,8 +34,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY composer*.json ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Copy project files
+# Copy project files and compiled node_modules/assets
 COPY . .
+COPY --from=assets-builder /app/node_modules ./node_modules
 COPY --from=assets-builder /app/public/build ./public/build
 
 # Run post-autoload dump
@@ -43,6 +46,9 @@ RUN composer run post-autoload-dump
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Normalize line endings to prevent Windows CRLF syntax errors in Alpine
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh /etc/supervisord.conf /etc/nginx/nginx.conf
 
 # Make entrypoint script executable
 RUN chmod +x /usr/local/bin/entrypoint.sh

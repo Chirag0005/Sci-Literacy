@@ -1,12 +1,13 @@
 #!/bin/sh
 
-# Ensure SQLite database file exists
+# Ensure SQLite database directory and file exist with correct permissions
+mkdir -p /var/www/html/database
 DB_FILE="/var/www/html/database/database.sqlite"
 if [ ! -f "$DB_FILE" ]; then
     echo "Creating SQLite database file at $DB_FILE..."
     touch "$DB_FILE"
-    chown www-data:www-data "$DB_FILE"
 fi
+chown -R www-data:www-data /var/www/html/database
 
 # Run migrations
 echo "Running database migrations..."
